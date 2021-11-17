@@ -1,15 +1,3 @@
-# this is the hangman main page
-# there will be multiple levels
-# All options will have RSTLNE
-#       Easy - RSTLNE, 
-#       Medium
-#       Hard
-#
-# User will type a letter or the word/phrase, program will detect this and parse through the code
-# TODO
-# 1. Get basic app wtih menu options
-# 2. Get access to dictionary (of words or phrases) https://www.mit.edu/~ecprice/wordlist.10000
-# 3. Apple score system
 from random import randint
 import os
 
@@ -53,31 +41,43 @@ def play_game(difficulty):
     word = get_word(difficulty)
     answer_array = [char for char in word]
     guessed_array = ["r", "s", "t", "l", "n", "e"]
-    solved = False
-    lives = 5
-    while lives > 0 or not solved:
-        coded_word = get_coded_word(answer_array, guessed_array)
-        response = game_screen(coded_word, lives)
+    completed = False
+    if difficulty == "e":
+        lives = 9
+    else:
+        lives = 7
+    while not completed:
+        coded_word = get_coded_word(answer_array, guessed_array, False)
+        response = game_screen(coded_word, lives, guessed_array)
         if len(response) == 1:
-            # if the letter.lower() is in the guessed array, prompt the player to try again without taking lives
-            # if the letter.lower() is not in the guessed array, add it to the array
-            #       If the player guessed correctly, it will be revealed
-            #           Check to see if the word has been revealed, changing solved to True if it has
-            #       If the player guessed incorrectly, a life will be lost
-            pass
-        elif len(response > 1):
-            # check if the answer.lower() == word.lower(). If it does, set solved to True
-            # if answer.lower() != word.lower(), a life is lost
-            pass
+            if response.lower() in "abcdefghijklmnopqrstuvwxyz":
+                if response.lower() in guessed_array:
+                    print(center_padding("ALREADY GUESSED LETTER, TRY AGAIN", WIDTH))
+                else:
+                    guessed_array.append(response.lower())
+                    if response.lower() in word:
+                        completed = check_for_solved(word, get_coded_word(answer_array,guessed_array, True))
+                    else:
+                        print(center_padding("INCORRECT GUESS", WIDTH))
+                        lives -= 1
+            else:
+                print(center_padding("PLEASE ENTER A LETTER", WIDTH))
 
+        elif len(response) > 1:
+            if response.lower() == word.lower():
+                completed = True
+            else:
+                print(center_padding("INCORRECT GUESS", WIDTH))
+                lives -= 1
 
-        lives -= 1 # delete this
-    if lives == 0:
-        # losing print screen, goes back to gameplay_menu
-        pass
-    elif solved:
-        # winning print screen, goes back to gameplay_menu
-        pass
+        if lives == 0:
+            completed = True
+            defeat(word)
+    
+    if lives > 0:
+        victory(word)
+        
+    
 
 
 def get_word(difficulty):
@@ -106,9 +106,33 @@ def get_word(difficulty):
     return word
 
 
+def get_coded_word(answer_array, guessed_array, compare):
+    coded_word = ''
+    for letter in answer_array:
+        found_letter = False
+        for guess in guessed_array:
+            if letter == guess:
+                found_letter = True
+        if found_letter:
+            coded_word += letter.upper()
+        else:
+            coded_word += "?"
+        if not compare:
+            coded_word += " "
+    return coded_word
+
+
+def check_for_solved(word, coded_word):
+    if coded_word.lower() == word:
+        return True
+    else:
+        return False
+
+
 # ===================================================================================================
 # ALL VISUAL ELEMENTS ARE BELOW HERE
 # ===================================================================================================
+
 
 full_spacer = "**************************************************"
 empty_spacer = "*                                                *"
@@ -129,8 +153,6 @@ def menu(title, content, prompt):
                 height -= 1
         elif height < 8 and height > 3:
             print(empty_spacer)
-        elif height == 3:
-            print("guessed words go here")
         elif height == 1:
             choice = input(prompt)
         height -= 1
@@ -138,35 +160,27 @@ def menu(title, content, prompt):
     return choice
 
 
-def game_screen(coded_word, lives):
+def game_screen(coded_word, lives, guessed_array):
     height = 10
+    guesses = ""
+    for guess in guessed_array:
+        guesses += guess.upper()
     while height > 0:
         if height == 10 or height == 2:
             print(full_spacer)
         elif height == 9:
             print(center_padding(f"{lives} LIVES REMAINING", WIDTH))
-        elif height == 8 or (height < 7 and height > 2):
+        elif height == 8 or (height < 7 and height > 3):
             print(empty_spacer)
         elif height == 7:
             print(center_padding(coded_word, WIDTH))
+        elif height == 3:
+            print(left_padding(guesses, WIDTH))
         elif height == 1:
             guess = input("enter letter or guess: ")
         height -= 1
+    print("\n\n")
     return guess
-
-
-def get_coded_word(answer_array, guessed_array):
-    coded_word = ''
-    for letter in answer_array:
-        found_letter = False
-        for guess in guessed_array:
-            if letter == guess:
-                found_letter = True
-        if found_letter:
-            coded_word += f"{letter.upper()} "
-        elif not found_letter:
-            coded_word += "? "
-    return coded_word
 
 
 def center_padding(content, WIDTH):
@@ -183,6 +197,30 @@ def left_padding(content, WIDTH):
     while len(content) < WIDTH - 1:
         content = content + " "
     return content + "*"
+
+
+def victory(word):
+    print(full_spacer)
+    print(empty_spacer)
+    print(center_padding("CONGRATS! YOU GUESSED", WIDTH))
+    print(center_padding(word.upper(), WIDTH))
+    print(center_padding("CORRECTLY!", WIDTH))
+    print(empty_spacer)
+    print(full_spacer)
+    answer = input("press ENTER to continue")
+    print("\n\n")
+
+
+def defeat(word):
+    print(full_spacer)
+    print(empty_spacer)
+    print(center_padding("Good try. The word was:", WIDTH))
+    print(center_padding(word.upper(), WIDTH))
+    print(center_padding("Please try again!", WIDTH))
+    print(empty_spacer)
+    print(full_spacer)
+    answer = input("press ENTER to continue")
+    print("\n\n")
 
 
 if os.path.isfile(DICTIONARY):
