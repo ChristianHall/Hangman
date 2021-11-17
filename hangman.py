@@ -45,7 +45,7 @@ def play_game(difficulty):
     if difficulty == "e":
         lives = 9
     else:
-        lives = 7
+        lirves = 7
     while not completed:
         coded_word = get_coded_word(answer_array, guessed_array, False)
         response = game_screen(coded_word, lives, guessed_array)
@@ -90,7 +90,7 @@ def get_word(difficulty):
         length = [5,10]
         diffword = True
 
-    idx = randint(1,9997)
+    idx = randint(1,9984)
     dictionary = open(DICTIONARY)
     lines = dictionary.readlines()
     usable_word = False
